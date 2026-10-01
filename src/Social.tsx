@@ -272,6 +272,13 @@ export default Social;
 //   }
 
 //   return Array.from(byEmail.values());
+//Array.from(map.values())   // [1, 2]
+//Array.from(map.keys())     // ["a", "b"]
+//Array.from(map.entries())  // [["a", 1], ["b", 2]]
+//Array.from(new Set([1, 2, 2, 3]));
+// [1, 2, 3]
+//Array.from("abc");
+// ["a", "b", "c"]
 // }
 
 // // ---- Step 3: Validate ----
@@ -298,4 +305,147 @@ export default Social;
 //   }
 
 //   return errors;
+// }
+
+//Another question:
+
+// const extracted = {
+//   fullName: "Ana Lopez",
+//   address: "123 Main St",
+//   dob: "1990-03-07",
+//   ssn: "123456789",
+// };
+
+// const formInput = {
+//   fullName: "Ana Lopez",
+//   address: "456 Oak Ave",   // client moved, document is outdated
+//   dob: "1990-03-07",
+//   phone: "5125551234",      // only in form, not extracted
+// };
+
+// {
+//   merged: {
+//     fullName: "Ana Lopez",
+//     address: "456 Oak Ave",
+//     dob: "1990-03-07",
+//     ssn: "123456789",
+//     phone: "5125551234",
+//   },
+//   conflicts: [
+//     { field: "address", extractedValue: "123 Main St", formValue: "456 Oak Ave" },
+//   ],
+// }
+
+// function mergeClientData(extracted, formInput) {
+//   const merged = {};      // the final combined record we'll return
+//   const conflicts = [];   // list of fields where the two sources disagreed
+
+//   // Get every field name that appears in EITHER source, with no duplicates.
+//   // We need this because a field might only exist in one of the two objects
+//   // (e.g. "phone" is only in formInput, "ssn" is only in extracted).
+//   // Using a Set automatically removes duplicate field names.
+
+// new Set(...) takes that one array and builds a Set from it, removing duplicates:
+// new Set(["fullName", "address", "dob", "ssn", "fullName", "address", "dob", "phone"])
+// Set(5) { "fullName", "address", "dob", "ssn", "phone" }
+//new Set("hello")
+// Set(4) { "h", "e", "l", "o" }   <- duplicate "l" removed
+
+//   const allFields = new Set([
+//     ...Object.keys(extracted),
+//     ...Object.keys(formInput),
+//   ]);
+
+//   // Go through each field name once, and decide what the merged value should be.
+//   for (const field of allFields) {
+//     const extractedValue = extracted[field];   // e.g. extracted.address
+//     const formValue = formInput[field];        // e.g. formInput.address
+
+//     // Treat undefined, null, AND empty string all as "this source has no value here."
+//     // We can't just do `if (extractedValue)` because that would also treat
+//     // 0 or false as "missing," which could be wrong for other fields.
+//     const hasExtracted = isPresent(extractedValue);
+//     const hasForm = isPresent(formValue);
+
+//     // CASE 1: only the form has a value → just use the form's value.
+//     if (hasForm && !hasExtracted) {
+//       merged[field] = formValue;
+//       continue; // move to the next field, nothing more to check
+//     }
+
+//     // CASE 2: only the extracted document has a value → use that instead.
+//     if (hasExtracted && !hasForm) {
+//       merged[field] = extractedValue;
+//       continue;
+//     }
+
+//     // CASE 3: neither source has a value → skip this field entirely.
+//     // (merged simply won't have this key at all)
+//     if (!hasExtracted && !hasForm) {
+//       continue;
+//     }
+
+//     // CASE 4 (the interesting one): BOTH sources have a value.
+//     // We need to check if they actually agree or not.
+//     if (normalize(extractedValue) === normalize(formValue)) {
+//       // They agree (ignoring case/whitespace differences) — no conflict.
+//       merged[field] = formValue; // could just as well use extractedValue here
+//     } else {
+//       // They genuinely disagree. Business rule: the client's own form entry
+//       // is trusted more than an OCR-extracted value, so form wins.
+//       merged[field] = formValue;
+
+//       // But we still record that a conflict happened, so a human can
+//       // review it later — we don't want to silently discard the mismatch.
+//       conflicts.push({ field, extractedValue, formValue });
+//     }
+//   }
+
+//   return { merged, conflicts };
+// }
+
+// // Small helper: is this value actually usable, or effectively "missing"?
+// function isPresent(value) {
+//   return value !== undefined && value !== null && value !== "";
+// }
+
+// // Small helper: make two values comparable despite minor formatting
+// // differences, e.g. "Ana Lopez" vs "ana lopez " should count as the same.
+// function normalize(value) {
+//   return String(value).trim().toLowerCase();
+// }
+
+// const map = new Map([["a", 1], ["b", 2]]);
+// new Set(map.values())
+// Set(2) { 1, 2 }
+
+//Another quesiton
+
+const dbRecords = [
+  { clientId: "c1", name: "Ana Lopez", email: "ana@x.com", state: "TX" },
+  { clientId: "c2", name: "Bob Kim", email: "bob@x.com", state: "CA" },
+  { clientId: "c3", name: "Carla Diaz", email: "carla@x.com", state: "NY" },
+];
+
+const uploadedRecords = [
+  { clientId: "c1", name: "Ana Lopez", email: "ana@x.com", state: "TX" }, // unchanged
+  { clientId: "c2", name: "Bob Kim", email: "bobk@x.com", state: "CA" }, // email changed
+  { clientId: "c4", name: "Dana White", email: "dana@x.com", state: "FL" }, // new
+];
+
+// Expected output:
+
+// {
+//   added: [
+//     { clientId: "c4", name: "Dana White", email: "dana@x.com", state: "FL" },
+//   ],
+//   removed: [x
+//     { clientId: "c3", name: "Carla Diaz", email: "carla@x.com", state: "NY" },
+//   ],
+//   updated: [
+//     {
+//       clientId: "c2",
+//       changes: { email: { from: "bob@x.com", to: "bobk@x.com" } },
+//     },
+//   ],
 // }
